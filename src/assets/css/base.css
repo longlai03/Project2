@@ -1,0 +1,41 @@
+body {
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --color-white: #fefefe;
+  --color-gray-neutral: #7b7d7f;
+  --color-gray-dark: #393139;
+  --color-gray-light: #eaebef;
+  --color-pink-very-light: #fdece5;
+  --color-rosy-brown: #a99492;
+  --color-blue-primary: #3281e3;
+  --color-charcoal: #5c5a60;
+  --color-silver: #b9bab9;
+  --color-earth-pink: #b3696a;
+  --color-offwhite: #f6f6f7;
+  --color-gray-very-light: #dedcdc;
+  --color-destructive: #dc3545;
+  --color-destructive-dark: #bb2d3b;
+  --color-destructive-light: #f8d7da;
+}
+
+ul {
+  margin: 0;
+  padding: 0;
+}
+
+li {
+  list-style: none;
+}
+
+a {
+  text-decoration: none;
+  color: black;
+}
+
+p {
+  margin: 0;
+  padding: 0;
+}
