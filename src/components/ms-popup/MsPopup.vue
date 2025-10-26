@@ -4,26 +4,27 @@
             <!-- Header -->
             <div class="modal-header">
                 <p class="font-heading1">{{ popupTitle }}</p>
-                <ButtonMs :button-icon="faXmark" button-type="plain" :onClick="() => openModal = false" />
+                <MsButton :button-icon="faXmark" button-type="plain" :onClick="() => openModal = false" />
             </div>
             <!-- Body -->
             <div class="modal-body">
-                <slot name="msBodyPopup"></slot>
+                <slot name="body"></slot>
             </div>
             <!-- Footer -->
             <div class="modal-footer">
                 <!-- Secondary buttons -->
-                <ButtonMs v-for="(button, index) in secondaryAction" :key="index" button-type="plain"
-                    :button-text="button.title" :onClick="button.action" />
+                <MsButton v-for="(button, index) in secondaryAction" :key="index" button-type="plain"
+                    :button-text="button.title" :onClick="button.action" class="modal-button" />
                 <!-- Primary button -->
-                <ButtonMs button-type="primary" :button-text="primaryAction.title" :onClick="primaryAction.action" />
+                <MsButton button-type="primary" :button-text="primaryAction.title" :onClick="primaryAction.action"
+                    class="modal-button" />
             </div>
         </div>
     </div>
 </template>
 <script setup>
 import { faXmark } from '@fortawesome/free-solid-svg-icons';
-import ButtonMs from '../control/ButtonMs.vue';
+import MsButton from '../ms-button/MsButton.vue';
 
 defineProps({
     popupTitle: {
@@ -52,7 +53,7 @@ const openModal = defineModel('openModal');
     align-items: center;
     justify-content: center;
     overflow: hidden;
-    z-index: 10;
+    z-index: 999;
 }
 
 .modal-container {
@@ -61,7 +62,7 @@ const openModal = defineModel('openModal');
     background-color: white;
     border-radius: 4px;
     min-width: 500px;
-    max-height: 60%;
+    max-height: 80%;
 }
 
 .modal-header {
@@ -75,7 +76,6 @@ const openModal = defineModel('openModal');
 
 .modal-body {
     padding: 10px;
-    display: flex;
     overflow: auto;
 }
 
@@ -86,5 +86,9 @@ const openModal = defineModel('openModal');
     gap: 12px;
     background-color: var(--color-offwhite);
     border-radius: 0 0 4px 4px;
+}
+
+.modal-button {
+    padding: 8px 16px
 }
 </style>

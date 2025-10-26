@@ -1,62 +1,88 @@
 <template>
     <div class="side-bar d-flex d-flex-col d-justify-between">
         <ul class="d-flex d-flex-col d-gap-2">
-            <li>
-                <ButtonMs :button-icon="faRectangleList" icon-position="left" button-text="Tin tuyển dụng"
-                    button-type="plain" class="side-bar-button" :onClick="() => navigate('/')" />
-            </li>
-            <li>
-                <ButtonMs :button-icon="faUser" icon-position="left" button-text="Ứng viên" button-type="plain"
-                    class="side-bar-button" :onClick="() => navigate('/candidates')" />
-            </li>
-            <li>
-                <ButtonMs :button-icon="faCalendar" icon-position="left" button-text="Lịch" button-type="plain"
-                    class="side-bar-button" :onClick="() => navigate('/')" />
-            </li>
-            <li>
-                <ButtonMs :button-icon="faIdBadge" icon-position="left" button-text="Kho tiềm năng" button-type="plain"
-                    class="side-bar-button" :onClick="() => navigate('/')" />
-            </li>
-            <li>
-                <ButtonMs :button-icon="faChartColumn" icon-position="left" button-text="Chiến dịch tuyển dụng"
-                    button-type="plain" class="side-bar-button" :onClick="() => navigate('/')" />
-            </li>
-            <li>
-                <ButtonMs :button-icon="faClipboardCheck" icon-position="left" button-text="Công việc"
-                    button-type="plain" class="side-bar-button" :onClick="() => navigate('/')" />
-            </li>
-            <li>
-                <ButtonMs :button-icon="faEnvelope" icon-position="left" button-text="Trao đổi với ứng viên"
-                    button-type="plain" class="side-bar-button" :onClick="() => navigate('/')" />
-            </li>
-            <li>
-                <ButtonMs :button-icon="faCommentDots" icon-position="left" button-text="Báo cáo" button-type="plain"
-                    class="side-bar-button" :onClick="() => navigate('/')" />
-            </li>
-            <li>
-                <ButtonMs :button-icon="faChartPie" icon-position="left" button-text="Thiết lập" button-type="plain"
-                    class="side-bar-button" :onClick="() => navigate('/')" />
-            </li>
-            <li>
-                <ButtonMs :button-icon="faGear" icon-position="left" button-text="Kiến thức hữu ích" button-type="plain"
-                    class="side-bar-button" :onClick="() => navigate('/')" />
+            <li v-for="(item, index) in sidebarList">
+                <MsButton :button-icon="item.icon" icon-position="left"
+                    :button-text="isCollapsed ? undefined : item.title" button-type="plain" class="side-bar-button"
+                    :class="isCollapsed ? 'collapse' : ''" :onClick="() => navigate(item.path)" />
             </li>
         </ul>
-        <div class="">
-            <ButtonMs :button-icon="faRectangleList" icon-position="left" button-text="Thu gọn" button-type="plain"
-                class="side-bar-button" :onClick="() => navigate('/')" />
+        <div>
+            <MsButton :button-icon="isCollapsed ? faChevronRight : faChevronLeft" icon-position="left"
+                :button-text="isCollapsed ? undefined : 'Thu gọn'" button-type="plain" class="side-bar-button"
+                :class="isCollapsed ? 'collapse' : ''" :onClick="handleCollapse" />
         </div>
     </div>
 </template>
 <script setup>
-import ButtonMs from '@/components/control/ButtonMs.vue';
+import MsButton from '@/components/ms-button/MsButton.vue';
 import router from '@/router';
 import { faCalendar, faCommentDots, faEnvelope, faIdBadge, faRectangleList, faUser } from '@fortawesome/free-regular-svg-icons';
-import { faChartColumn, faChartPie, faClipboardCheck, faGear } from '@fortawesome/free-solid-svg-icons';
+import { faChartColumn, faChartPie, faChevronLeft, faChevronRight, faClipboardCheck, faGear } from '@fortawesome/free-solid-svg-icons';
+import { ref } from 'vue';
+
+const sidebarList = [
+    {
+        title: 'Tin tuyển dụng',
+        icon: faRectangleList,
+        path: '/',
+    },
+    {
+        title: 'Ứng viên',
+        icon: faUser,
+        path: '/candidates',
+    },
+    {
+        title: 'Lịch',
+        icon: faCalendar,
+        path: '/',
+    },
+    {
+        title: 'Kho tiềm năng',
+        icon: faIdBadge,
+        path: '/',
+    },
+    {
+        title: 'Chiến dịch tuyển dụng',
+        icon: faChartColumn,
+        path: '/',
+    },
+    {
+        title: 'Công việc',
+        icon: faClipboardCheck,
+        path: '/',
+    },
+    {
+        title: 'Trao đổi với ứng viên',
+        icon: faEnvelope,
+        path: '/',
+    },
+    {
+        title: 'Báo cáo',
+        icon: faCommentDots,
+        path: '/',
+    },
+    {
+        title: 'Thiết lập',
+        icon: faChartPie,
+        path: '/',
+    },
+    {
+        title: 'Kiến thức hữu ích',
+        icon: faGear,
+        path: '/',
+    },
+];
+const isCollapsed = ref(false);
 
 const navigate = (link = '/') => {
     router.push(link);
 }
+
+const handleCollapse = () => {
+    isCollapsed.value = !isCollapsed.value;
+}
+
 </script>
 <style scoped>
 .side-bar {
@@ -66,12 +92,20 @@ const navigate = (link = '/') => {
 }
 
 .side-bar-button {
-    color: white !important;
-    width: 100% !important;
+    color: white;
+    width: 100%;
     font-size: 14px;
 }
 
 .side-bar-button:hover {
-    background-color: var(--color-blue-primary) !important;
+    background-color: var(--color-blue-primary);
+}
+
+.collapse {
+    display: flex;
+    align-items: center;
+    width: 32px;
+    white-space: nowrap;
+    justify-content: center;
 }
 </style>

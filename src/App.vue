@@ -1,4 +1,5 @@
 <script setup>
+import MsToast from './components/ms-toast/MsToast.vue';
 import TheHeader from './layout/TheHeader.vue';
 import TheContent from './layout/TheMain.vue';
 import TheSidebar from './layout/TheSidebar.vue';
@@ -12,6 +13,7 @@ import TheSidebar from './layout/TheSidebar.vue';
       <TheSidebar />
       <TheContent />
     </div>
+    <MsToast />
   </div>
 </template>
 

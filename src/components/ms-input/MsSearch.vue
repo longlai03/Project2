@@ -15,6 +15,10 @@ defineProps({
         required: false,
     },
 })
+
+const modelValue = defineModel();
+const emit = defineEmits(['change']);
+
 </script>
 
 <template>
@@ -22,7 +26,7 @@ defineProps({
         <label class="nav-search-label" for="nav-search" v-if="iconPosition === 'left' && searchIcon">
             <FontAwesomeIcon :icon="searchIcon" />
         </label>
-        <input :placeholder="placeholder" />
+        <input :placeholder="placeholder" v-model="modelValue" @input="emit('change', $event.target.value)" />
         <label class="nav-search-label" for="nav-search" v-if="iconPosition === 'right' && searchIcon">
             <FontAwesomeIcon :icon="searchIcon" />
         </label>

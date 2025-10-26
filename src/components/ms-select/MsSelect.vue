@@ -16,16 +16,11 @@ defineProps({
     },
     title: {
         type: String,
-        required: true
+        required: false,
     },
     inlineTitle: {
         type: Boolean,
         default: false,
-        required: false,
-    },
-    type: {
-        type: String,
-        default: 'text',
         required: false,
     },
     placeholder: {
@@ -53,9 +48,6 @@ const modelValue = defineModel();
 }
 
 .input-field {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
     padding: 6px 10px;
     min-width: 200px;
     border-radius: 4px;
@@ -71,6 +63,7 @@ const modelValue = defineModel();
 .input-field:hover {
     background-color: #e6e6e6;
     cursor: pointer;
+    border: 1px solid var(--color-gray-dark);
 }
 
 .inline {

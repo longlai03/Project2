@@ -40,7 +40,7 @@ const buttonTypeFunc = (buttonType) => {
 </script>
 
 <template>
-    <button class="button d-flex d-items-center d-gap-1" :class="buttonTypeFunc(buttonType)" @click.prevent="onClick">
+    <button class="button" :class="buttonTypeFunc(buttonType)" @click.prevent="onClick">
         <FontAwesomeIcon v-if="iconPosition === 'left' && buttonIcon" :icon="buttonIcon" />
         <p v-if="buttonText">{{ buttonText }}</p>
         <FontAwesomeIcon v-if="iconPosition === 'right' && buttonIcon" :icon="buttonIcon" />
@@ -54,6 +54,7 @@ const buttonTypeFunc = (buttonType) => {
     gap: 10px;
     border-radius: 5px;
     padding: 10px;
+    cursor: pointer;
 }
 
 .button-plain {

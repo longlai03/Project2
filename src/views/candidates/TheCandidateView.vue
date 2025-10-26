@@ -4,251 +4,80 @@
         <div class="candidate-header d-flex d-justify-between d-items-center">
             <p class="font-heading1">Ứng viên</p>
             <div class="employee-button-add-container d-flex">
-                <ButtonMs :button-icon="faPlus" icon-position="left" button-text="Thêm ứng viên" buttonType="primary"
-                    class="employee-button-1" :onClick="() => showPopup = true" />
-                <ButtonMs :button-icon="faChevronDown" icon-position="left" button-type="primary"
+                <MsButton :button-icon="faPlus" icon-position="left" button-text="Thêm ứng viên" buttonType="primary"
+                    class="employee-button-1" :onClick="() => handleOpenPopup()" />
+                <MsButton :button-icon="faChevronDown" icon-position="left" button-type="primary"
                     class="employee-button-2" />
             </div>
         </div>
         <!-- Body -->
-        <MsTable :columns="tableColumn" :items="tableItems" class="candidate-body" />
+        <MsTable :filter="true" :pagination="true" :columns="tableColumn" :items="popupData" item-id="CandidateID"
+            class="candidate-body" @row-click="(id) => handleOpenPopup(id)" @delete-click="handleDelete"
+            @search-change="debounceGetCandidates">
+            <template #CandidateName="{ data }">
+                <div class="d-flex d-items-center d-gap-2">
+                    <MsAvatar :avatar-src="avatarPlaceholder" />
+                    <div class="d-flex" :class="data.IsEmployee ? 'd-flex-col' : 'd-gap-1'">
+                        {{ data.CandidateName || "--" }}
+                        <span class="subtext" v-if="data.IsEmployee">
+                            <FontAwesomeIcon :icon="faCheck" />
+                            Nhân viên
+                        </span>
+                        <MailNotification :unread-text="data.UnreadEmailQuantity" v-if="data.UnreadEmailQuantity > 0" />
+                    </div>
+                </div>
+            </template>
+            <template #Overall="{ data }">
+                <div class="d-flex">
+                    <FontAwesomeIcon v-for="i in 5" :icon="i <= (data.Overall ?? 0) ? faStar1 : faStar2" />
+                </div>
+            </template>
+        </MsTable>
     </div>
-    <Popup v-model:openModal="showPopup" v-slot:msBodyPopup popup-title="Thêm ứng viên"
+    <!-- Popup -->
+    <Popup v-model:openModal="showPopup" v-slot:body
+        :popup-title="selectedCandidateId !== null ? 'Sửa ứng viên' : 'Thêm ứng viên'"
         :primary-action="primaryPopupAction" :secondary-action="secondaryPopupAction">
-        <TheCandidateForm />
+        <TheCandidateForm :candidate-id="selectedCandidateId" v-model="popupFormData" />
     </Popup>
 </template>
 <script setup>
-import ButtonMs from '@/components/control/ButtonMs.vue';
-import Popup from '@/components/popup/Popup.vue';
-import MsTable from '@/components/table/MsTable.vue';
-import TheCandidateForm from '@/views/candidates/TheCandidateForm.vue';
-import { faChevronDown, faPlus } from '@fortawesome/free-solid-svg-icons';
-import { ref } from 'vue';
+import candidateAPI from '@/apis/components/candidates/candidateAPI';
+import avatarPlaceholder from '@/assets/images/employee1.jpg';
+import MsAvatar from '@/components/ms-avatar/MsAvatar.vue';
+import MsButton from '@/components/ms-button/MsButton.vue';
+import MailNotification from '@/components/ms-icons/MsMailNotificationIcon.vue';
+import Popup from '@/components/ms-popup/MsPopup.vue';
+import MsTable from '@/components/ms-table/MsTable.vue';
+import { useToast } from '@/helpers/useToast';
+import { faStar as faStar2 } from '@fortawesome/free-regular-svg-icons';
+import { faCheck, faChevronDown, faPlus, faStar as faStar1 } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { onMounted, ref } from 'vue';
+import TheCandidateForm from './TheCandidateForm.vue';
+import { convertGMTToLocalDateTime, convertLocalDateTimeToGMT } from '@/utils/common/convertDatetime';
+import { debounce } from 'lodash';
 
+const toast = useToast();
+const showPopup = ref(false);
+const popupData = ref([])
+const popupFormData = ref({});
+const selectedCandidateId = ref(null);
 const tableColumn = [
-    'Họ và tên',
-    'Số điện thoại',
-    'Email',
-    'Chiến dịch tuyển dụng',
-    'Vị trí tuyển dụng',
-    'Tín tuyển dụng',
-    'Vòng tuyển dụng',
-    'Đánh giá',
-    'Ngày ứng tuyển'
+    { label: "Họ và tên", fieldID: "CandidateName", type: "custom", visible: true },
+    { label: "Số điện thoại", fieldID: "Mobile", type: "mobile" },
+    { label: "Email", fieldID: "Email", type: "text" },
+    { label: "Chiến dịch tuyển dụng", fieldID: "RecruitmentCampaign", type: "text" },
+    { label: "Vị trí tuyển dụng", fieldID: "JobPositionName", type: "text" },
+    { label: "Tín tuyển dụng", fieldID: "ChannelName", type: "text" },
+    { label: "Vòng tuyển dụng", fieldID: "RecruitmentStatus", type: "text" },
+    { label: "Đánh giá", fieldID: "Overall", type: "custom" },
+    { label: "Ngày ứng tuyển", fieldID: "ApplyDate", type: "date" },
 ];
-
-const tableItems = [
-    {
-        CountTask: null,
-        CandidateName: "Lại Hoàng Long",
-        Mobile: "0918982455",
-        Email: "hoanglong2dtd@gmail.com",
-        RecruitmentCampaignNames: null,
-        JobPositionName: "Phát triển phần mềm",
-        RecruitmentName: "QC/Tester HN, HCM Quý 3.2025",
-        RecruitmentRoundName: "Offer",
-        Score: 0,
-        ApplyDate: "2025-08-19T10:01:31.379+07:00",
-        ChannelName: null,
-        EducationDegreeName: null,
-        EducationPlaceName: null,
-        EducationMajorName: null,
-        WorkPlaceRecent: null,
-        AttractivePersonnel: "Dương Thị Thảo",
-        OrganizationUnitName: null,
-        Overall: null,
-        AreaName: "thanhhoa",
-        PresenterName: null,
-        ProbationInfoStatus: null,
-        IsTalentPoolDetail: null,
-        AccountPortal: null,
-        TagInfos: null,
-        CandidateStatusID: 1,
-        Gender: 1,
-        Birthday: null,
-        Address: "",
-        ReasonRemoved: null,
-        CollaboratorName: null,
-        HireDate: null,
-        OfferStatus: 1,
-        RecruitmentChannelID: null,
-        CandidateID: 0,
-        RecruitmentID: 20962,
-        Avatar: null,
-        AvatarColor: "#EDC201",
-        Active: 1,
-        CandidateStatusName: null,
-        IsNew: 0,
-        IsSelfUpdate: 0,
-        IsNewProbationInfo: 0,
-        IsSentProbationInfo: 0,
-        RecruitmentStatusReal: 5,
-        RecruitmentStatus: 5,
-        IsOutOfCapcity: null,
-        BirthdayFormat: 3,
-        MonthOfBirthday: 1,
-        YearOfBirthday: 1970,
-        IsMultiNews: 0,
-        IsEmployee: true,
-        CustomInforFields: "{}",
-        PresenterOUID: null,
-        PresenterOUName: null,
-        CandidateType: 0,
-        UnreadEmailQuantity: 0,
-        EmployeeBlackListIDs: null,
-        RecruitmentCampaignIDs: null,
-        CandidateConvertID: "d1fa29d8-7ca8-11f0-a2ee-005056b252e4",
-        SentPropose: null,
-        UnreadCommentQuantity: 0,
-        StatusTrain: null,
-        IsSendTrain: null,
-        ProposeOfferStatus: 2,
-        IsDuplicate: 0,
-    },
-    {
-        CountTask: null,
-        CandidateName: "Nguyễn Thị Mai",
-        Mobile: "0987123456",
-        Email: "mainguyen.dev@gmail.com",
-        RecruitmentCampaignNames: null,
-        JobPositionName: "Tester phần mềm",
-        RecruitmentName: "QC/Tester HN, HCM Quý 3.2025",
-        RecruitmentRoundName: "Interview",
-        Score: 85,
-        ApplyDate: "2025-09-02T14:30:20.000+07:00",
-        ChannelName: "Website",
-        EducationDegreeName: "Đại học",
-        EducationPlaceName: "ĐH Bách Khoa Hà Nội",
-        EducationMajorName: "Công nghệ thông tin",
-        WorkPlaceRecent: "FPT Software",
-        AttractivePersonnel: "Trần Minh Tâm",
-        OrganizationUnitName: "Phòng QA",
-        Overall: null,
-        AreaName: "hanoi",
-        PresenterName: "Phạm Hồng Anh",
-        ProbationInfoStatus: null,
-        IsTalentPoolDetail: null,
-        AccountPortal: null,
-        TagInfos: null,
-        CandidateStatusID: 2,
-        Gender: 0,
-        Birthday: "1999-05-14T00:00:00.000+07:00",
-        Address: "Hà Nội",
-        ReasonRemoved: null,
-        CollaboratorName: null,
-        HireDate: null,
-        OfferStatus: 0,
-        RecruitmentChannelID: null,
-        CandidateID: 1,
-        RecruitmentID: 20962,
-        Avatar: null,
-        AvatarColor: "#3AA655",
-        Active: 1,
-        CandidateStatusName: "Phỏng vấn",
-        IsNew: 0,
-        IsSelfUpdate: 0,
-        IsNewProbationInfo: 0,
-        IsSentProbationInfo: 0,
-        RecruitmentStatusReal: 3,
-        RecruitmentStatus: 3,
-        IsOutOfCapcity: null,
-        BirthdayFormat: 1,
-        MonthOfBirthday: 5,
-        YearOfBirthday: 1999,
-        IsMultiNews: 0,
-        IsEmployee: false,
-        CustomInforFields: "{}",
-        PresenterOUID: null,
-        PresenterOUName: null,
-        CandidateType: 0,
-        UnreadEmailQuantity: 1,
-        EmployeeBlackListIDs: null,
-        RecruitmentCampaignIDs: null,
-        CandidateConvertID: "e6a7b4de-7db1-11f0-b8b2-005056b252e4",
-        SentPropose: null,
-        UnreadCommentQuantity: 0,
-        StatusTrain: null,
-        IsSendTrain: null,
-        ProposeOfferStatus: 1,
-        IsDuplicate: 0,
-    },
-    {
-        CountTask: null,
-        CandidateName: "Trần Quốc Huy",
-        Mobile: "0912345678",
-        Email: "quochuy.it@gmail.com",
-        RecruitmentCampaignNames: null,
-        JobPositionName: "Frontend Developer",
-        RecruitmentName: "Frontend ReactJS Quý 4.2025",
-        RecruitmentRoundName: "Test kỹ năng",
-        Score: 92,
-        ApplyDate: "2025-10-10T09:15:45.000+07:00",
-        ChannelName: "LinkedIn",
-        EducationDegreeName: "Đại học",
-        EducationPlaceName: "ĐH Công nghệ TP.HCM",
-        EducationMajorName: "Khoa học máy tính",
-        WorkPlaceRecent: "TMA Solutions",
-        AttractivePersonnel: "Nguyễn Văn Long",
-        OrganizationUnitName: "Phòng Phát triển Web",
-        Overall: null,
-        AreaName: "hcm",
-        PresenterName: null,
-        ProbationInfoStatus: null,
-        IsTalentPoolDetail: null,
-        AccountPortal: null,
-        TagInfos: null,
-        CandidateStatusID: 3,
-        Gender: 1,
-        Birthday: "1997-08-22T00:00:00.000+07:00",
-        Address: "TP. Hồ Chí Minh",
-        ReasonRemoved: null,
-        CollaboratorName: null,
-        HireDate: null,
-        OfferStatus: 1,
-        RecruitmentChannelID: null,
-        CandidateID: 2,
-        RecruitmentID: 21001,
-        Avatar: null,
-        AvatarColor: "#2196F3",
-        Active: 1,
-        CandidateStatusName: "Đang đánh giá",
-        IsNew: 0,
-        IsSelfUpdate: 1,
-        IsNewProbationInfo: 0,
-        IsSentProbationInfo: 0,
-        RecruitmentStatusReal: 4,
-        RecruitmentStatus: 4,
-        IsOutOfCapcity: null,
-        BirthdayFormat: 3,
-        MonthOfBirthday: 8,
-        YearOfBirthday: 1997,
-        IsMultiNews: 0,
-        IsEmployee: false,
-        CustomInforFields: "{}",
-        PresenterOUID: null,
-        PresenterOUName: null,
-        CandidateType: 0,
-        UnreadEmailQuantity: 0,
-        EmployeeBlackListIDs: null,
-        RecruitmentCampaignIDs: null,
-        CandidateConvertID: "f2c2a3a2-7dc2-11f0-c91e-005056b252e4",
-        SentPropose: null,
-        UnreadCommentQuantity: 2,
-        StatusTrain: null,
-        IsSendTrain: null,
-        ProposeOfferStatus: 2,
-        IsDuplicate: 0,
-    }
-];
-
 const primaryPopupAction = {
     title: "Gửi",
-    action: () => {
-        console.log('click ne');
-    }
+    action: () => handleAddOrUpdate()
 }
-
 const secondaryPopupAction = [
     {
         title: "Hủy",
@@ -258,7 +87,86 @@ const secondaryPopupAction = [
     }
 ]
 
-const showPopup = ref(false);
+onMounted(async () => {
+    // setTimeout(() => {
+    //     const localStorageData = candidatesLocalStorage.getAll()
+    //     popupData.value = localStorageData;
+    //     console.log(localStorageData);
+
+    // }, 4000);
+    // candidateAPI.getAll().then((res) => console.log(res));
+    // const getAll = await candidateAPI.getAll();
+    // console.log(apiData);
+    // const formatApiData = getAll.data.map(item => ({
+    //     ...item,
+    //     Birthday: item.Birthday ? convertGMTToLocalDateTime(item.Birthday) : null,
+    //     ApplyDate: item.ApplyDate ? convertGMTToLocalDateTime(item.ApplyDate) : null,
+    // }));
+    // popupData.value = formatApiData;
+    await getCandidates();
+})
+
+const getCandidates = async (search = '', limit = '10', page = '1') => {
+    const getAllByFilter = await candidateAPI.getAllByFilter(search, limit, page);
+    const formatApiData = getAllByFilter.data.map(item => ({
+        ...item,
+        Birthday: item.Birthday ? convertGMTToLocalDateTime(item.Birthday) : null,
+        ApplyDate: item.ApplyDate ? convertGMTToLocalDateTime(item.ApplyDate) : null,
+    }));
+    popupData.value = formatApiData;
+}
+
+const debounceGetCandidates = debounce(async (search = '', limit = '10', page = '1') => {
+    await getCandidates(search, limit, page)
+}, 400)
+
+const handleOpenPopup = (id = null) => {
+    selectedCandidateId.value = id;
+    showPopup.value = true;
+}
+
+const handleAddOrUpdate = async () => {
+    const cloneFormData = {
+        ...popupFormData.value,
+        Birthday: popupFormData.value.Birthday ? convertLocalDateTimeToGMT(popupFormData.value.Birthday) : null,
+        ApplyDate: popupFormData.value.Birthday ? convertLocalDateTimeToGMT(popupFormData.value.ApplyDate) : null,
+    }
+    console.log(cloneFormData);
+    // if (selectedCandidateId.value !== null) {
+    //     // const updated = candidatesLocalStorage.update(selectedCandidateId.value, cloneFormData)
+    //     const updated = await candidateAPI.update(selectedCandidateId.value, cloneFormData);
+    //     if (updated.data) {
+    //         const index = popupData.value.findIndex(
+    //             item => item.CandidateID === selectedCandidateId.value
+    //         )
+    //         if (index !== -1) { popupData.value[index] = updated.data }
+    //         toast.success('Sửa thành công!', 'Dữ liệu đã được cập nhật.')
+    //     } else {
+    //         toast.error('Sửa thất bại', 'Có lỗi khi cập nhật dữ liệu.')
+    //     }
+    // } else {
+    //     // const added = candidatesLocalStorage.add(cloneFormData)
+    //     const added = await candidateAPI.add(cloneFormData);
+    //     if (added.data) {
+    //         popupData.value.push(added.data)
+    //         toast.success('Thêm thành công!', 'Dữ liệu đã được thêm.')
+    //     } else {
+    //         toast.error('Thêm thất bại', 'Có lỗi khi thêm dữ liệu.')
+    //     }
+    // }
+    showPopup.value = false;
+}
+
+const handleDelete = async (selectedIds) => {
+    popupData.value = popupData.value.filter(
+        (item) => !selectedIds.includes(item.CandidateID)
+    );
+    const deleted = await candidateAPI.delete(selectedIds);
+    if (deleted.data) {
+        toast.success("Xóa thành công!", "Dữ liệu đã được cập nhật.");
+    }
+}
+
 </script>
 <style scoped>
 .candidate-container {
@@ -267,6 +175,7 @@ const showPopup = ref(false);
     flex: 1;
     padding: 16px;
     gap: 16px;
+    overflow: hidden;
 }
 
 .candidate-header {
@@ -290,5 +199,9 @@ const showPopup = ref(false);
 
 .employee-button-2 {
     border-radius: 0px 4px 4px 0px;
+}
+
+.subtext {
+    color: green
 }
 </style>

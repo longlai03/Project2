@@ -3,3 +3,12 @@
   width: 16px;
   height: 14px;
 }
+
+.icon-close {
+  mask-image: url('./ICON.svg');
+  mask-position: -17px -1px;
+  mask-repeat: no-repeat;
+  background-color: green;
+  width: 14px;
+  height: 14px;
+}
